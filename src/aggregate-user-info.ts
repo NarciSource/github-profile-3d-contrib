@@ -50,24 +50,33 @@ export const aggregateUserInfo = (
             date: new Date(week.date),
         }));
     const contributesLanguage: { [language: string]: type.LangInfo } = {};
-    user.contributionsCollection.commitContributionsByRepository
-        .filter((repo) => repo.repository.primaryLanguage)
-        .forEach((repo) => {
-            const language = repo.repository.primaryLanguage?.name || '';
-            const color = repo.repository.primaryLanguage?.color || OTHER_COLOR;
-            const contributions = repo.contributions.totalCount;
+    user.contributionsCollection.commitContributionsByRepository.forEach(
+        (repo) => {
+            const langs = repo.repository.languages;
 
-            const info = contributesLanguage[language];
-            if (info) {
-                info.contributions += contributions;
-            } else {
-                contributesLanguage[language] = {
-                    language: language,
-                    color: color,
-                    contributions: contributions,
-                };
-            }
-        });
+            if (!langs || !langs.edges || langs.totalSize === 0) return;
+
+            langs.edges.forEach((edge) => {
+                const language = edge.node.name;
+                const color = edge.node.color || OTHER_COLOR;
+
+                const ratio = edge.size / langs.totalSize;
+
+                const contributions = repo.contributions.totalCount * ratio;
+
+                const info = contributesLanguage[language];
+                if (info) {
+                    info.contributions += contributions;
+                } else {
+                    contributesLanguage[language] = {
+                        language,
+                        color,
+                        contributions,
+                    };
+                }
+            });
+        },
+    );
     const languages: Array<type.LangInfo> = Object.values(
         contributesLanguage,
     ).sort((obj1, obj2) => -compare(obj1.contributions, obj2.contributions));

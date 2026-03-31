@@ -10,10 +10,16 @@ export type CommitContributionsByRepository = Array<{
         totalCount: number;
     };
     repository: {
-        primaryLanguage: {
-            name: string;
-            /** "#RRGGBB" */
-            color: string | null;
+        languages: {
+            totalSize: number;
+            edges: Array<{
+                size: number;
+                node: {
+                    name: string;
+                    /** "#RRGGBB" */
+                    color: string | null;
+                };
+            }>;
         } | null;
     };
 }>;
@@ -109,9 +115,15 @@ export const fetchFirst = async (
                         }
                         commitContributionsByRepository(maxRepositories: ${maxReposOneQuery}) {
                             repository {
-                                primaryLanguage {
-                                    name
-                                    color
+                                languages(first: 10, orderBy: { field: SIZE, direction: DESC }) {
+                                    totalSize
+                                    edges {
+                                        size
+                                        node {
+                                            name
+                                            color
+                                        }
+                                    }
                                 }
                             }
                             contributions {
